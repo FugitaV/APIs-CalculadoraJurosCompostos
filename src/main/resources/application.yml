@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: calculadora-juros-compostos
+
+  # Aponta o Spring Cloud Function para o bean registrado em FunctionConfig
+  cloud:
+    function:
+      definition: calculationFunction
+
+  # Inicialização lazy reduz cold start no Lambda / SnapStart
+  main:
+    lazy-initialization: true
+    web-application-type: none   # sem servidor web embarcado
+
+logging:
+  level:
+    com.example: INFO
+    software.amazon.awssdk: WARN
