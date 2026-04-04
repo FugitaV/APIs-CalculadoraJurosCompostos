@@ -36,8 +36,12 @@ public class CompoundInterestService implements CalculateInterestUseCase {
                                       List<SimulationInterval> intervals,
                                       String userId) {
 
-        // taxa anual (%) → taxa mensal decimal: annualRate / 1200
-        BigDecimal monthlyRate = annualRate.divide(BigDecimal.valueOf(1200), SCALE, ROUNDING);
+        // Converte taxa anual efetiva em taxa mensal equivalente (conversão composta):
+        // r_mensal = (1 + r_anual) ^ (1/12) - 1
+        // Ex: 12% a.a. → (1,12)^(1/12) - 1 ≈ 0,9489% a.m.
+        double annualRateDecimal = annualRate.doubleValue() / 100.0;
+        double monthlyRateDouble = Math.pow(1.0 + annualRateDecimal, 1.0 / 12.0) - 1.0;
+        BigDecimal monthlyRate = BigDecimal.valueOf(monthlyRateDouble).setScale(SCALE, ROUNDING);
 
         BigDecimal currentBalance = initialValue;
         List<IntervalResult> intervalResults = new ArrayList<>();

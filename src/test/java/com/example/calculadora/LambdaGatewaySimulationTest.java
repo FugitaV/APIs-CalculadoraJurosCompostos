@@ -87,6 +87,12 @@ class LambdaGatewaySimulationTest {
         assertThat(response.getTotalInvested())
                 .isEqualByComparingTo(new BigDecimal("50000"));
 
+        // intervalo 1 com só PMT=500, PV=10000, 12%a.a., 12 meses deve bater com o frontend
+        // r_mensal = (1,12)^(1/12)-1 ≈ 0,9489% → FV ≈ 17.523,25
+        assertThat(response.getIntervals().get(0).getFinalBalance()
+                .setScale(2, java.math.RoundingMode.HALF_UP))
+                .isEqualByComparingTo(new BigDecimal("17523.25"));
+
         // cada intervalo tem saldo final e juros positivos
         for (IntervalResult interval : response.getIntervals()) {
             assertThat(interval.getFinalBalance()).isPositive();
