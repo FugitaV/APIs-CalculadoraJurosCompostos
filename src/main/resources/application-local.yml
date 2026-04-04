@@ -1,0 +1,5 @@
+# Configurações sobrescritas ao rodar com -Dspring.profiles.active=local
+# O DynamoDB não é necessário; o NoOpSimulationRepository é usado no lugar.
+spring:
+  main:
+    lazy-initialization: false   # facilita ver erros de boot mais rápido
