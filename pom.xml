@@ -93,18 +93,22 @@
                 </configuration>
             </plugin>
 
-            <!-- Spring Boot repackage (necessário para o FunctionInvoker encontrar a classe principal) -->
+            <!--
+                O spring-boot-maven-plugin NÃO deve reempacotar o JAR para Lambda:
+                o formato nested (BOOT-INF/classes) não é lido pelo FunctionInvoker.
+                O shade-plugin cria o fat JAR com classpath plano.
+            -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
-                </configuration>
+                <executions>
+                    <execution>
+                        <id>repackage</id>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- Fat JAR para deploy no Lambda -->
@@ -114,8 +118,8 @@
                 <version>3.6.0</version>
                 <configuration>
                     <createDependencyReducedPom>false</createDependencyReducedPom>
-                    <shadedArtifactAttached>true</shadedArtifactAttached>
-                    <shadedClassifierName>aws</shadedClassifierName>
+                    <!-- substitui o JAR principal pelo fat JAR — arquivo gerado: calculadora-juros-compostos-1.0.0.jar -->
+                    <shadedArtifactAttached>false</shadedArtifactAttached>
                     <filters>
                         <filter>
                             <artifact>*:*</artifact>
