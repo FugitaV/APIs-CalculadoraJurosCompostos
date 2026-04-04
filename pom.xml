@@ -21,6 +21,8 @@
         <java.version>21</java.version>
         <spring-cloud.version>2024.0.1</spring-cloud.version>
         <aws-sdk.version>2.29.0</aws-sdk.version>
+        <!-- Versão mínima do Lombok com suporte a Java 23/24 -->
+        <lombok.version>1.18.36</lombok.version>
     </properties>
 
     <dependencyManagement>
