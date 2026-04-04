@@ -111,11 +111,7 @@
                 </configuration>
             </plugin>
 
-            <!--
-                O spring-boot-maven-plugin NÃO deve reempacotar o JAR para Lambda:
-                o formato nested (BOOT-INF/classes) não é lido pelo FunctionInvoker.
-                O shade-plugin cria o fat JAR com classpath plano.
-            -->
+            <!-- Desabilita o repackage do Spring Boot (formato nested não funciona no Lambda) -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -129,7 +125,23 @@
                 </executions>
             </plugin>
 
-            <!-- Fat JAR para deploy no Lambda -->
+            <!-- Define Main-Class e Start-Class no MANIFEST.MF antes do shade -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.example.calculadora.CalculadoraApplication</mainClass>
+                        </manifest>
+                        <manifestEntries>
+                            <Start-Class>com.example.calculadora.CalculadoraApplication</Start-Class>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <!-- Fat JAR sem transformers — herda o MANIFEST.MF definido acima -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -147,15 +159,6 @@
                             </excludes>
                         </filter>
                     </filters>
-                    <transformers>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <manifestEntries>
-                                <Main-Class>com.example.calculadora.CalculadoraApplication</Main-Class>
-                                <Start-Class>com.example.calculadora.CalculadoraApplication</Start-Class>
-                            </manifestEntries>
-                        </transformer>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                    </transformers>
                 </configuration>
                 <executions>
                     <execution>
