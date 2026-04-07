@@ -3,6 +3,7 @@ package com.example.calculadora.domain.model;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
@@ -63,6 +64,7 @@ public class Simulation {
 
     // ── demais campos ─────────────────────────────────────────────────────────
 
+    @DynamoDbAttribute("simulation_id")
     public String getSimulationId() { return simulationId; }
     public void setSimulationId(String simulationId) { this.simulationId = simulationId; }
 
