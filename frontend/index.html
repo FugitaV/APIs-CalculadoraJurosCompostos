@@ -83,7 +83,26 @@
 
     /* ── GRID BASE ── */
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 540px) { .grid-2 { grid-template-columns: 1fr; } }
+    @media (max-width: 560px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* ── MOBILE ── */
+    @media (max-width: 480px) {
+      body { padding: 16px 10px 48px; }
+      header { margin-bottom: 24px; }
+      header h1 { font-size: 1.35rem; }
+      header p  { font-size: .82rem; }
+      .card { padding: 18px 14px 16px; }
+      .card-title { font-size: .92rem; margin-bottom: 16px; }
+      .interval-card { padding: 14px 12px 12px; }
+      .interval-label { font-size: .88rem; }
+      .btn-simulate { font-size: .92rem; padding: 12px; }
+      .extra-toggle { font-size: .7rem; padding: 4px 8px; }
+      .btn-icon { width: 26px; height: 26px; font-size: .9rem; }
+      .results-grid { grid-template-columns: 1fr; }
+      .stat-card .stat-value { font-size: 1.15rem; }
+      .stat-card.highlight .stat-value { font-size: 1.3rem; }
+      th, td { padding: 9px 10px; font-size: .8rem; }
+    }
 
     /* ── FIELD ── */
     .field { display: flex; flex-direction: column; gap: 6px; }
@@ -105,11 +124,14 @@
     }
     .input-wrap:focus-within { border-color: var(--orange); }
     .input-wrap .prefix, .input-wrap .suffix {
-      padding: 0 10px;
-      font-size: .82rem;
-      color: var(--muted);
+      padding: 0 12px;
+      font-size: .84rem;
+      font-weight: 600;
+      color: rgba(241,241,241,.65);
       white-space: nowrap;
-      background: rgba(255,255,255,.04);
+      background: rgba(255,255,255,.055);
+      user-select: none;
+      flex-shrink: 0;
     }
     .input-wrap .prefix { border-right: 1px solid var(--input-border); }
     .input-wrap .suffix { border-left:  1px solid var(--input-border); }
@@ -142,11 +164,20 @@
       margin-bottom: 14px;
     }
     .interval-label {
-      font-size: .78rem;
-      font-weight: 700;
-      color: var(--orange);
-      text-transform: uppercase;
-      letter-spacing: .6px;
+      font-size: .95rem;
+      font-weight: 600;
+      color: var(--orange-light);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .interval-label::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 16px;
+      background: var(--orange);
+      border-radius: 2px;
     }
     .interval-actions { display: flex; gap: 8px; align-items: center; }
 
@@ -400,6 +431,9 @@
       <div class="spinner" id="spinner"></div>
       <span id="btnText">Simular</span>
     </button>
+    <p id="coldStartHint" style="display:none;text-align:center;font-size:.75rem;color:var(--muted);margin-top:10px">
+      ⏳ A primeira requisição pode levar até 15s (cold start do servidor).
+    </p>
   </div>
 
   <!-- ── RESULTS ── -->
@@ -597,12 +631,14 @@
 
   // ── Chamada à API ──────────────────────────────────────────────────────────
   async function simulate() {
-    const btn     = document.getElementById('btnSimulate');
-    const spinner = document.getElementById('spinner');
-    const btnText = document.getElementById('btnText');
-    const errBox  = document.getElementById('errorBox');
+    const btn       = document.getElementById('btnSimulate');
+    const spinner   = document.getElementById('spinner');
+    const btnText   = document.getElementById('btnText');
+    const errBox    = document.getElementById('errorBox');
+    const coldHint  = document.getElementById('coldStartHint');
 
-    errBox.style.display = 'none';
+    errBox.style.display  = 'none';
+    coldHint.style.display = 'none';
 
     let payload;
     try {
@@ -613,9 +649,17 @@
       return;
     }
 
-    btn.disabled        = true;
-    spinner.style.display = 'block';
-    btnText.textContent = 'Calculando...';
+    btn.disabled           = true;
+    spinner.style.display  = 'block';
+    btnText.textContent    = 'Calculando...';
+
+    const startTime = Date.now();
+    let elapsed = 0;
+    const timer = setInterval(() => {
+      elapsed = Math.floor((Date.now() - startTime) / 1000);
+      btnText.textContent = `Calculando... ${elapsed}s`;
+      if (elapsed >= 5) coldHint.style.display = 'block';
+    }, 1000);
 
     try {
       const res = await fetch(API_URL, {
@@ -639,9 +683,11 @@
       errBox.textContent = 'Erro ao conectar com a API: ' + e.message;
       errBox.style.display = 'block';
     } finally {
-      btn.disabled        = false;
-      spinner.style.display = 'none';
-      btnText.textContent = 'Simular';
+      clearInterval(timer);
+      btn.disabled           = false;
+      spinner.style.display  = 'none';
+      btnText.textContent    = 'Simular';
+      coldHint.style.display = 'none';
     }
   }
 
