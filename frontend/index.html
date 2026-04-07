@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Juros Compostos</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #12121e;
+      --card:        #1c1c2e;
+      --card-border: #2a2a42;
+      --input-bg:    #252538;
+      --input-border:#35355a;
+      --orange:      #f97316;
+      --orange-dark: #ea6005;
+      --orange-light:#fdba74;
+      --text:        #f1f1f1;
+      --muted:       #9090b0;
+      --success:     #22c55e;
+      --radius:      10px;
+      --shadow:      0 4px 24px rgba(0,0,0,.45);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 32px 16px 64px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -.5px;
+    }
+    header h1 span { color: var(--orange); }
+    header p {
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: .9rem;
+    }
+
+    .layout {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 28px 28px 24px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--orange-light);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 18px;
+      background: var(--orange);
+      border-radius: 2px;
+    }
+
+    /* ── GRID BASE ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 540px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* ── FIELD ── */
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .input-wrap {
+      display: flex;
+      align-items: center;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 7px;
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+    .input-wrap:focus-within { border-color: var(--orange); }
+    .input-wrap .prefix, .input-wrap .suffix {
+      padding: 0 10px;
+      font-size: .82rem;
+      color: var(--muted);
+      white-space: nowrap;
+      background: rgba(255,255,255,.04);
+    }
+    .input-wrap .prefix { border-right: 1px solid var(--input-border); }
+    .input-wrap .suffix { border-left:  1px solid var(--input-border); }
+    .input-wrap input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: .95rem;
+      padding: 10px 12px;
+      width: 100%;
+    }
+    .input-wrap input::placeholder { color: var(--input-border); }
+
+    /* ── INTERVALS ── */
+    #intervals { display: flex; flex-direction: column; gap: 14px; margin-top: 20px; }
+
+    .interval-card {
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 16px 16px 14px;
+      position: relative;
+    }
+    .interval-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .interval-label {
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--orange);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+    }
+    .interval-actions { display: flex; gap: 8px; align-items: center; }
+
+    .btn-icon {
+      background: rgba(249,115,22,.12);
+      border: 1px solid rgba(249,115,22,.3);
+      color: var(--orange);
+      border-radius: 6px;
+      width: 28px; height: 28px;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s;
+      line-height: 1;
+    }
+    .btn-icon:hover { background: rgba(249,115,22,.25); }
+    .btn-icon.danger {
+      background: rgba(239,68,68,.1);
+      border-color: rgba(239,68,68,.3);
+      color: #ef4444;
+    }
+    .btn-icon.danger:hover { background: rgba(239,68,68,.22); }
+
+    .extra-toggle {
+      font-size: .75rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--muted);
+      cursor: pointer;
+      background: none;
+      border: 1px dashed var(--input-border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .extra-toggle:hover { border-color: var(--orange); color: var(--orange); }
+    .extra-toggle.active { border-color: var(--orange); color: var(--orange); background: rgba(249,115,22,.08); }
+
+    .extra-field { margin-top: 12px; }
+
+    /* ── ADD INTERVAL ── */
+    .add-interval {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: none;
+      border: 1px dashed var(--card-border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: .85rem;
+      padding: 10px 14px;
+      cursor: pointer;
+      width: 100%;
+      transition: all .2s;
+      margin-top: 4px;
+    }
+    .add-interval:hover { border-color: var(--orange); color: var(--orange); }
+    .add-interval .plus {
+      width: 22px; height: 22px;
+      background: rgba(249,115,22,.15);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      color: var(--orange);
+    }
+
+    /* ── SIMULATE BUTTON ── */
+    .btn-simulate {
+      width: 100%;
+      padding: 13px;
+      background: var(--orange);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 24px;
+      letter-spacing: .3px;
+      transition: background .2s, transform .1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-simulate:hover  { background: var(--orange-dark); }
+    .btn-simulate:active { transform: scale(.98); }
+    .btn-simulate:disabled { background: #555; cursor: not-allowed; opacity: .7; }
+
+    /* ── SPINNER ── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── ERROR ── */
+    .error-box {
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.35);
+      color: #fca5a5;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: .88rem;
+      margin-top: 16px;
+      display: none;
+    }
+
+    /* ── RESULTS ── */
+    #results { display: none; }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 600px) { .results-grid { grid-template-columns: 1fr; } }
+
+    .stat-card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 16px 18px;
+      text-align: center;
+    }
+    .stat-card.highlight {
+      background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
+      border-color: var(--orange);
+    }
+    .stat-card .stat-label {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .stat-card.highlight .stat-label { color: rgba(255,255,255,.8); }
+    .stat-card .stat-value {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .stat-card.highlight .stat-value { font-size: 1.5rem; }
+
+    /* ── INTERVALS TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+    }
+    thead tr {
+      background: rgba(249,115,22,.08);
+      border-bottom: 1px solid var(--card-border);
+    }
+    th {
+      padding: 10px 14px;
+      text-align: right;
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--orange-light);
+      font-weight: 700;
+    }
+    th:first-child { text-align: left; }
+    td {
+      padding: 11px 14px;
+      text-align: right;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      color: var(--text);
+    }
+    td:first-child { text-align: left; color: var(--muted); font-weight: 600; }
+    tbody tr:hover { background: rgba(255,255,255,.02); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ── PROGRESS BAR ── */
+    .bar-wrap { margin-top: 20px; }
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: .78rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .bar-track {
+      height: 8px;
+      background: rgba(255,255,255,.08);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--orange-dark), var(--orange));
+      transition: width .8s ease;
+    }
+    .bar-fill.juros {
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Calculadora de <span>Juros Compostos</span></h1>
+  <p>Simule cenários de investimento com aportes variáveis e capitalize seu futuro.</p>
+</header>
+
+<div class="layout">
+
+  <!-- ── FORM ── -->
+  <div class="card">
+    <div class="card-title">Parâmetros da Simulação</div>
+
+    <div class="grid-2">
+      <div class="field">
+        <label>Valor Inicial</label>
+        <div class="input-wrap">
+          <span class="prefix">R$</span>
+          <input id="initialValue" type="number" min="0" step="0.01" placeholder="10.000,00" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Taxa de Juros</label>
+        <div class="input-wrap">
+          <input id="annualRate" type="number" min="0" step="0.01" placeholder="12,00" />
+          <span class="suffix">% ao ano</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Intervals -->
+    <div id="intervals"></div>
+
+    <button class="add-interval" onclick="addInterval()">
+      <span class="plus">+</span>
+      Adicionar intervalo
+    </button>
+
+    <div class="error-box" id="errorBox"></div>
+
+    <button class="btn-simulate" onclick="simulate()" id="btnSimulate">
+      <div class="spinner" id="spinner"></div>
+      <span id="btnText">Simular</span>
+    </button>
+  </div>
+
+  <!-- ── RESULTS ── -->
+  <div class="card" id="results">
+    <div class="card-title">Resultado da Simulação</div>
+
+    <div class="results-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Investido</div>
+        <div class="stat-value" id="rTotalInvested">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total em Juros</div>
+        <div class="stat-value" id="rTotalInterest" style="color:var(--success)">—</div>
+      </div>
+      <div class="stat-card highlight">
+        <div class="stat-label">Valor Final</div>
+        <div class="stat-value" id="rFinalValue">—</div>
+      </div>
+    </div>
+
+    <!-- Progress bars -->
+    <div class="bar-wrap">
+      <div class="bar-label">
+        <span>Aportes</span>
+        <span id="barPct1">—</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" id="barFill1" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="bar-wrap" style="margin-top:10px">
+      <div class="bar-label">
+        <span style="color:var(--success)">Juros</span>
+        <span id="barPct2">—</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill juros" id="barFill2" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Per-interval table -->
+    <div class="table-wrap" style="margin-top:28px">
+      <table>
+        <thead>
+          <tr>
+            <th>Intervalo</th>
+            <th>Aportado</th>
+            <th>Juros Gerados</th>
+            <th>Saldo Final</th>
+          </tr>
+        </thead>
+        <tbody id="intervalTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Config ─────────────────────────────────────────────────────────────────
+  const API_URL = 'https://13zv2pr424.execute-api.sa-east-1.amazonaws.com/prod/calcular';
+
+  // Gera ou recupera userId do localStorage
+  function getUserId() {
+    let id = localStorage.getItem('calc_user_id');
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem('calc_user_id', id);
+    }
+    return id;
+  }
+
+  // ── Formatação ─────────────────────────────────────────────────────────────
+  const brl = v => new Intl.NumberFormat('pt-BR', {
+    style: 'currency', currency: 'BRL', minimumFractionDigits: 2
+  }).format(v);
+
+  const pct = (a, b) => ((a / b) * 100).toFixed(1) + '%';
+
+  // ── Estado dos intervalos ──────────────────────────────────────────────────
+  let intervalCount = 0;
+
+  function addInterval() {
+    intervalCount++;
+    const idx   = intervalCount;
+    const isFirst = idx === 1;
+    const container = document.getElementById('intervals');
+
+    const div = document.createElement('div');
+    div.className = 'interval-card';
+    div.id = `interval-${idx}`;
+
+    div.innerHTML = `
+      <div class="interval-header">
+        <span class="interval-label">Intervalo ${idx}</span>
+        <div class="interval-actions">
+          ${!isFirst ? `
+          <button class="extra-toggle" id="extraToggle-${idx}" onclick="toggleExtra(${idx})"
+            title="Adicionar aporte extra no início deste intervalo">
+            + Aporte Extra
+          </button>` : ''}
+          ${!isFirst ? `<button class="btn-icon danger" onclick="removeInterval(${idx})" title="Remover intervalo">✕</button>` : ''}
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label>Aporte Mensal</label>
+          <div class="input-wrap">
+            <span class="prefix">R$</span>
+            <input id="pmt-${idx}" type="number" min="0" step="0.01" placeholder="500,00" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Período</label>
+          <div class="input-wrap">
+            <input id="period-${idx}" type="number" min="1" step="1" placeholder="12" />
+            <span class="suffix">mes(es)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="extra-field" id="extraField-${idx}" style="display:none">
+        <div class="field" style="margin-top:0">
+          <label>Aporte Extra (injetado no início do período)</label>
+          <div class="input-wrap">
+            <span class="prefix">R$</span>
+            <input id="extra-${idx}" type="number" min="0" step="0.01" placeholder="10.000,00" />
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(div);
+  }
+
+  function removeInterval(idx) {
+    const el = document.getElementById(`interval-${idx}`);
+    if (el) el.remove();
+  }
+
+  function toggleExtra(idx) {
+    const field  = document.getElementById(`extraField-${idx}`);
+    const toggle = document.getElementById(`extraToggle-${idx}`);
+    const visible = field.style.display !== 'none';
+    field.style.display = visible ? 'none' : 'block';
+    toggle.classList.toggle('active', !visible);
+    toggle.textContent = visible ? '+ Aporte Extra' : '− Aporte Extra';
+    if (visible) {
+      const input = document.getElementById(`extra-${idx}`);
+      if (input) input.value = '';
+    }
+  }
+
+  // ── Coleta dos dados do formulário ─────────────────────────────────────────
+  function collectForm() {
+    const initialValue = parseFloat(document.getElementById('initialValue').value);
+    const annualRate   = parseFloat(document.getElementById('annualRate').value);
+
+    if (isNaN(initialValue) || initialValue < 0) throw new Error('Informe um Valor Inicial válido.');
+    if (isNaN(annualRate)   || annualRate <= 0)   throw new Error('Informe uma Taxa de Juros válida.');
+
+    const cards = document.querySelectorAll('.interval-card');
+    if (cards.length === 0) throw new Error('Adicione ao menos um intervalo.');
+
+    const intervals = [];
+    for (const card of cards) {
+      const id     = card.id.replace('interval-', '');
+      const pmt    = parseFloat(document.getElementById(`pmt-${id}`)?.value)    || 0;
+      const period = parseInt(document.getElementById(`period-${id}`)?.value)   || 0;
+      const extraEl = document.getElementById(`extra-${id}`);
+      const extraVisible = document.getElementById(`extraField-${id}`)?.style.display !== 'none';
+      const extra  = extraEl && extraVisible ? parseFloat(extraEl.value) || null : null;
+
+      if (period <= 0) throw new Error(`Período inválido no Intervalo ${id}.`);
+
+      intervals.push({
+        monthlyContribution: pmt,
+        periodInMonths:      period,
+        extraContribution:   extra
+      });
+    }
+
+    return { initialValue, annualRate, intervals };
+  }
+
+  // ── Chamada à API ──────────────────────────────────────────────────────────
+  async function simulate() {
+    const btn     = document.getElementById('btnSimulate');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btnText');
+    const errBox  = document.getElementById('errorBox');
+
+    errBox.style.display = 'none';
+
+    let payload;
+    try {
+      payload = collectForm();
+    } catch (e) {
+      errBox.textContent = e.message;
+      errBox.style.display = 'block';
+      return;
+    }
+
+    btn.disabled        = true;
+    spinner.style.display = 'block';
+    btnText.textContent = 'Calculando...';
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id':    getUserId()
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(`Erro ${res.status}: ${msg}`);
+      }
+
+      const data = await res.json();
+      renderResults(data);
+
+    } catch (e) {
+      errBox.textContent = 'Erro ao conectar com a API: ' + e.message;
+      errBox.style.display = 'block';
+    } finally {
+      btn.disabled        = false;
+      spinner.style.display = 'none';
+      btnText.textContent = 'Simular';
+    }
+  }
+
+  // ── Renderização dos resultados ────────────────────────────────────────────
+  function renderResults(data) {
+    const { totalInvested, totalInterest, finalValue, intervals } = data;
+
+    document.getElementById('rTotalInvested').textContent = brl(totalInvested);
+    document.getElementById('rTotalInterest').textContent = brl(totalInterest);
+    document.getElementById('rFinalValue').textContent    = brl(finalValue);
+
+    // Barras de progresso
+    const invPct   = (totalInvested / finalValue) * 100;
+    const jurosPct = (totalInterest / finalValue) * 100;
+
+    document.getElementById('barFill1').style.width = invPct.toFixed(1) + '%';
+    document.getElementById('barFill2').style.width = jurosPct.toFixed(1) + '%';
+    document.getElementById('barPct1').textContent  = pct(totalInvested, finalValue);
+    document.getElementById('barPct2').textContent  = pct(totalInterest, finalValue);
+
+    // Tabela de intervalos
+    const tbody = document.getElementById('intervalTable');
+    tbody.innerHTML = '';
+    intervals.forEach((iv, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>Intervalo ${i + 1}</td>
+        <td>${brl(iv.totalContributed)}</td>
+        <td style="color:var(--success)">${brl(iv.interestEarned)}</td>
+        <td style="font-weight:700">${brl(iv.finalBalance)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Exibe e rola até os resultados
+    const resultsEl = document.getElementById('results');
+    resultsEl.style.display = 'block';
+    resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Inicialização ──────────────────────────────────────────────────────────
+  addInterval(); // começa com um intervalo
+</script>
+</body>
+</html>
