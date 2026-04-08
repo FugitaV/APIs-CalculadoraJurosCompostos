@@ -104,11 +104,10 @@ public class CompoundInterestService implements CalculateInterestUseCase {
         long ttl = Instant.now().plus(90, ChronoUnit.DAYS).getEpochSecond();
 
         Simulation simulation = Simulation.builder()
-                .pk(userId + "#" + simulationId)
-                .sk(createdAt)
-                .ttl(ttl)
-                .userId(userId)
                 .simulationId(simulationId)
+                .userId(userId)
+                .createdAt(createdAt)
+                .ttl(ttl)
                 .initialValue(initialValue)
                 .annualRate(annualRate)
                 .intervals(intervals)

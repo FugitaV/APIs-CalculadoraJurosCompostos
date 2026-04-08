@@ -3,12 +3,8 @@ package com.example.calculadora.domain.model;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondarySortKey;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -17,10 +13,9 @@ import java.util.List;
  * Entidade DynamoDB para persistência de simulações.
  *
  * Tabela : simulations
- * PK     : userId#simulationId  (String)
- * SK     : createdAt            (String ISO-8601)
- * TTL    : ttl                  (Long, Unix epoch, expira em 90 dias)
- * GSI    : userId-createdAt-index  (userId → SK)
+ * PK     : simulationId  (String, UUID)
+ * Demais : userId, createdAt, ttl, initialValue, annualRate,
+ *          intervals[], totalInvested, totalInterest, finalValue, intervalResults[]
  */
 @DynamoDbBean
 @Builder
@@ -28,15 +23,9 @@ import java.util.List;
 @AllArgsConstructor
 public class Simulation {
 
-    // ── campos com anotações DynamoDB em getters explícitos ──────────────────
-
-    private String pk;
-    private String sk;
-    private String userId;
-
-    // ── campos restantes com getters/setters manuais ─────────────────────────
-
     private String simulationId;
+    private String userId;
+    private String createdAt;
     private Long ttl;
     private BigDecimal initialValue;
     private BigDecimal annualRate;
@@ -46,30 +35,15 @@ public class Simulation {
     private BigDecimal finalValue;
     private List<IntervalResult> intervalResults;
 
-    // ── PK ───────────────────────────────────────────────────────────────────
-
     @DynamoDbPartitionKey
-    public String getPk() { return pk; }
-    public void setPk(String pk) { this.pk = pk; }
+    public String getSimulationId() { return simulationId; }
+    public void setSimulationId(String simulationId) { this.simulationId = simulationId; }
 
-    // ── SK — serve também como sort key do GSI ────────────────────────────────
-
-    @DynamoDbSortKey
-    @DynamoDbSecondarySortKey(indexNames = {"userId-createdAt-index"})
-    public String getSk() { return sk; }
-    public void setSk(String sk) { this.sk = sk; }
-
-    // ── GSI partition key ─────────────────────────────────────────────────────
-
-    @DynamoDbSecondaryPartitionKey(indexNames = {"userId-createdAt-index"})
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
 
-    // ── demais campos ─────────────────────────────────────────────────────────
-
-    @DynamoDbAttribute("simulation_id")
-    public String getSimulationId() { return simulationId; }
-    public void setSimulationId(String simulationId) { this.simulationId = simulationId; }
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 
     public Long getTtl() { return ttl; }
     public void setTtl(Long ttl) { this.ttl = ttl; }
@@ -80,6 +54,9 @@ public class Simulation {
     public BigDecimal getAnnualRate() { return annualRate; }
     public void setAnnualRate(BigDecimal annualRate) { this.annualRate = annualRate; }
 
+    public List<SimulationInterval> getIntervals() { return intervals; }
+    public void setIntervals(List<SimulationInterval> intervals) { this.intervals = intervals; }
+
     public BigDecimal getTotalInvested() { return totalInvested; }
     public void setTotalInvested(BigDecimal totalInvested) { this.totalInvested = totalInvested; }
 
@@ -88,9 +65,6 @@ public class Simulation {
 
     public BigDecimal getFinalValue() { return finalValue; }
     public void setFinalValue(BigDecimal finalValue) { this.finalValue = finalValue; }
-
-    public List<SimulationInterval> getIntervals() { return intervals; }
-    public void setIntervals(List<SimulationInterval> intervals) { this.intervals = intervals; }
 
     public List<IntervalResult> getIntervalResults() { return intervalResults; }
     public void setIntervalResults(List<IntervalResult> intervalResults) { this.intervalResults = intervalResults; }
