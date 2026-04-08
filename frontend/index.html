@@ -361,6 +361,27 @@
     tbody tr:hover { background: rgba(255,255,255,.02); }
     tbody tr:last-child td { border-bottom: none; }
 
+    /* ── EXPORT BUTTON ── */
+    .btn-export {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 11px;
+      margin-top: 20px;
+      background: transparent;
+      color: var(--success);
+      border: 1px solid var(--success);
+      border-radius: 8px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+    .btn-export:hover  { background: rgba(34,197,94,.12); }
+    .btn-export:disabled { opacity: .5; cursor: not-allowed; }
+
     /* ── PROGRESS BAR ── */
     .bar-wrap { margin-top: 20px; }
     .bar-label {
@@ -489,13 +510,30 @@
         <tbody id="intervalTable"></tbody>
       </table>
     </div>
+
+    <!-- Export button -->
+    <button class="btn-export" id="btnExport" onclick="exportExcel()" style="display:none">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      <span id="exportText">Exportar Excel</span>
+      <div class="spinner" id="exportSpinner"></div>
+    </button>
+    <div class="error-box" id="exportErrorBox"></div>
   </div>
 
 </div>
 
 <script>
   // ── Config ─────────────────────────────────────────────────────────────────
-  const API_URL = 'https://13zv2pr424.execute-api.sa-east-1.amazonaws.com/prod/calcular';
+  const API_URL    = 'https://13zv2pr424.execute-api.sa-east-1.amazonaws.com/prod/calcular';
+  // Atualize com a URL da segunda Lambda (exportFunction) após criá-la na AWS:
+  const EXPORT_URL = 'https://SEU_API_GATEWAY_ID.execute-api.sa-east-1.amazonaws.com/prod/exportar';
+
+  let lastSimulationId = null; // guarda o ID retornado pela última simulação
 
   // Gera UUID compatível com todos os browsers (incluindo file:// e HTTP)
   function generateUUID() {
@@ -693,7 +731,14 @@
 
   // ── Renderização dos resultados ────────────────────────────────────────────
   function renderResults(data) {
-    const { totalInvested, totalInterest, finalValue, intervals } = data;
+    const { simulationId, totalInvested, totalInterest, finalValue, intervals } = data;
+
+    // Armazena ID para o botão de exportação
+    lastSimulationId = simulationId || null;
+    const exportBtn = document.getElementById('btnExport');
+    if (exportBtn) {
+      exportBtn.style.display = simulationId ? 'flex' : 'none';
+    }
 
     document.getElementById('rTotalInvested').textContent = brl(totalInvested);
     document.getElementById('rTotalInterest').textContent = brl(totalInterest);
@@ -726,6 +771,56 @@
     const resultsEl = document.getElementById('results');
     resultsEl.style.display = 'block';
     resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Exportação Excel ──────────────────────────────────────────────────────
+  async function exportExcel() {
+    if (!lastSimulationId) return;
+
+    const btn       = document.getElementById('btnExport');
+    const spinner   = document.getElementById('exportSpinner');
+    const btnText   = document.getElementById('exportText');
+    const errBox    = document.getElementById('exportErrorBox');
+
+    errBox.style.display   = 'none';
+    btn.disabled           = true;
+    spinner.style.display  = 'block';
+    btnText.textContent    = 'Gerando planilha...';
+
+    try {
+      const res = await fetch(EXPORT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ simulationId: lastSimulationId })
+      });
+
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(`Erro ${res.status}: ${msg}`);
+      }
+
+      const { fileName, fileContent } = await res.json();
+
+      // Decodifica Base64 → Uint8Array → Blob → download
+      const bytes = Uint8Array.from(atob(fileContent), c => c.charCodeAt(0));
+      const blob  = new Blob([bytes], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      const url = URL.createObjectURL(blob);
+      const a   = document.createElement('a');
+      a.href     = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+
+    } catch (e) {
+      errBox.textContent = 'Erro ao exportar: ' + e.message;
+      errBox.style.display = 'block';
+    } finally {
+      btn.disabled          = false;
+      spinner.style.display = 'none';
+      btnText.textContent   = 'Exportar Excel';
+    }
   }
 
   // ── Inicialização ──────────────────────────────────────────────────────────
