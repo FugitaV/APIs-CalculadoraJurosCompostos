@@ -11,6 +11,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecon
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Entidade DynamoDB para persistência de simulações.
@@ -39,9 +40,11 @@ public class Simulation {
     private Long ttl;
     private BigDecimal initialValue;
     private BigDecimal annualRate;
+    private List<SimulationInterval> intervals;
     private BigDecimal totalInvested;
     private BigDecimal totalInterest;
     private BigDecimal finalValue;
+    private List<IntervalResult> intervalResults;
 
     // ── PK ───────────────────────────────────────────────────────────────────
 
@@ -85,4 +88,10 @@ public class Simulation {
 
     public BigDecimal getFinalValue() { return finalValue; }
     public void setFinalValue(BigDecimal finalValue) { this.finalValue = finalValue; }
+
+    public List<SimulationInterval> getIntervals() { return intervals; }
+    public void setIntervals(List<SimulationInterval> intervals) { this.intervals = intervals; }
+
+    public List<IntervalResult> getIntervalResults() { return intervalResults; }
+    public void setIntervalResults(List<IntervalResult> intervalResults) { this.intervalResults = intervalResults; }
 }

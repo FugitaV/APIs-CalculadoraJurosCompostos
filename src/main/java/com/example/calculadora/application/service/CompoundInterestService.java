@@ -61,16 +61,22 @@ public class CompoundInterestService implements CalculateInterestUseCase {
         BigDecimal finalValue = currentBalance;
         BigDecimal totalInterest = finalValue.subtract(totalInvested).setScale(SCALE, ROUNDING);
 
-        SimulationResult result = SimulationResult.builder()
+        SimulationResult partialResult = SimulationResult.builder()
                 .totalInvested(totalInvested)
                 .totalInterest(totalInterest)
                 .finalValue(finalValue)
                 .intervals(intervalResults)
                 .build();
 
-        persistSimulation(userId, initialValue, annualRate, result);
+        String simulationId = persistSimulation(userId, initialValue, annualRate, intervals, partialResult);
 
-        return result;
+        return SimulationResult.builder()
+                .simulationId(simulationId)
+                .totalInvested(totalInvested)
+                .totalInterest(totalInterest)
+                .finalValue(finalValue)
+                .intervals(intervalResults)
+                .build();
     }
 
     // ── resolução de estratégia ────────────────────────────────────────────────
@@ -88,10 +94,11 @@ public class CompoundInterestService implements CalculateInterestUseCase {
 
     // ── persistência ──────────────────────────────────────────────────────────
 
-    private void persistSimulation(String userId,
-                                   BigDecimal initialValue,
-                                   BigDecimal annualRate,
-                                   SimulationResult result) {
+    private String persistSimulation(String userId,
+                                     BigDecimal initialValue,
+                                     BigDecimal annualRate,
+                                     List<SimulationInterval> intervals,
+                                     SimulationResult result) {
         String simulationId = UUID.randomUUID().toString();
         String createdAt = Instant.now().toString();
         long ttl = Instant.now().plus(90, ChronoUnit.DAYS).getEpochSecond();
@@ -104,11 +111,14 @@ public class CompoundInterestService implements CalculateInterestUseCase {
                 .simulationId(simulationId)
                 .initialValue(initialValue)
                 .annualRate(annualRate)
+                .intervals(intervals)
                 .totalInvested(result.getTotalInvested())
                 .totalInterest(result.getTotalInterest())
                 .finalValue(result.getFinalValue())
+                .intervalResults(result.getIntervals())
                 .build();
 
         saveSimulationPort.save(simulation);
+        return simulationId;
     }
 }

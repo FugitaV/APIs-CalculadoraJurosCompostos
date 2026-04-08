@@ -11,6 +11,9 @@ import java.util.List;
 @Builder
 public class SimulationResult {
 
+    /** ID da simulação gerado e persistido. */
+    String simulationId;
+
     /** Valor inicial + soma de todos os aportes (mensais e extras). */
     BigDecimal totalInvested;
 

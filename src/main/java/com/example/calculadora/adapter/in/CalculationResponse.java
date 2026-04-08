@@ -12,6 +12,8 @@ import java.util.List;
 @Builder
 public class CalculationResponse {
 
+    String simulationId;
+
     BigDecimal totalInvested;
     BigDecimal totalInterest;
     BigDecimal finalValue;

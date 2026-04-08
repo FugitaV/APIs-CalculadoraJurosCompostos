@@ -1,13 +1,19 @@
 package com.example.calculadora.domain.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 
 import java.math.BigDecimal;
 
 /** Resultado calculado para um único intervalo de investimento. */
-@Value
+@DynamoDbBean
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class IntervalResult {
 
     /** Saldo ao final do intervalo (torna-se saldo inicial do próximo). */

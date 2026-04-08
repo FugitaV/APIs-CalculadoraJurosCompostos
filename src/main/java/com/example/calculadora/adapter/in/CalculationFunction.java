@@ -32,6 +32,7 @@ public class CalculationFunction implements Function<Message<CalculationRequest>
         );
 
         return CalculationResponse.builder()
+                .simulationId(result.getSimulationId())
                 .totalInvested(result.getTotalInvested())
                 .totalInterest(result.getTotalInterest())
                 .finalValue(result.getFinalValue())
