@@ -13,6 +13,7 @@
       --card-border: #2a2a42;
       --input-bg:    #252538;
       --input-border:#35355a;
+      --input-white: #ffffff;
       --orange:      #f97316;
       --orange-dark: #ea6005;
       --orange-light:#fdba74;
@@ -126,7 +127,7 @@
     .input-wrap .prefix, .input-wrap .suffix {
       font-size: .9rem;
       font-weight: 400;
-      color: var(--input-border);
+      color: var(--input-white);
       white-space: nowrap;
       background: transparent;
       user-select: none;
@@ -605,7 +606,7 @@
           <label>Período</label>
           <div class="input-wrap">
             <input id="period-${idx}" type="number" min="1" step="1" placeholder="12" />
-            <span class="suffix">mes(es)</span>
+            <span class="suffix">mês(es)</span>
           </div>
         </div>
       </div>
