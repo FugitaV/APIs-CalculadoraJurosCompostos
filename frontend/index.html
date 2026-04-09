@@ -574,7 +574,7 @@
   function addInterval() {
     intervalCount++;
     const idx   = intervalCount;
-    const isFirst = idx === 1;
+    const isFirst = document.querySelectorAll('.interval-card').length === 0;
     const container = document.getElementById('intervals');
 
     const div = document.createElement('div');
@@ -583,7 +583,7 @@
 
     div.innerHTML = `
       <div class="interval-header">
-        <span class="interval-label">Intervalo ${idx}</span>
+        <span class="interval-label"></span>
         <div class="interval-actions">
           ${!isFirst ? `
           <button class="extra-toggle" id="extraToggle-${idx}" onclick="toggleExtra(${idx})"
@@ -623,11 +623,20 @@
     `;
 
     container.appendChild(div);
+    resequenceIntervals();
   }
 
   function removeInterval(idx) {
     const el = document.getElementById(`interval-${idx}`);
     if (el) el.remove();
+    resequenceIntervals();
+  }
+
+  function resequenceIntervals() {
+    document.querySelectorAll('.interval-card').forEach((card, i) => {
+      const label = card.querySelector('.interval-label');
+      if (label) label.textContent = `Intervalo ${i + 1}`;
+    });
   }
 
   function toggleExtra(idx) {
