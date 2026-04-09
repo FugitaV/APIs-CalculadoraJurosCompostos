@@ -1,7 +1,7 @@
 # Simulador de Juros Compostos — Documentação Técnica
 
 Sistema serverless de cálculo de juros compostos com suporte a intervalos de aporte variáveis, exportação de relatório em Excel e persistência de histórico. Construído sobre AWS Lambda + API Gateway + DynamoDB.
-
+http://calculadora-juros-compostos-frontend.s3-website-sa-east-1.amazonaws.com/
 ---
 
 ## Índice
@@ -36,33 +36,7 @@ Usuário → Frontend (S3) → API Gateway → Lambda (cálculo)  → DynamoDB
 
 ## Arquitetura
 
-```
-┌────────────────────────────────────────────────────────────────────┐
-│                        AWS Cloud (sa-east-1)                       │
-│                                                                    │
-│   ┌──────────────────┐      ┌────────────────────────────────────┐ │
-│   │   API Gateway    │─POST▶│  Lambda: calculadora-juros         │ │
-│   │  /prod/calcular  │      │  Function: calculationFunction     │ │
-│   │                  │      │  Runtime: Java 21 / Spring Cloud   │ │
-│   │  /prod/exportar  │─POST▶│  Lambda: exportar-simulacao        │─┤
-│   └──────────────────┘      │  Function: exportFunction          │ │
-│           ▲                 │  (mesma JAR, env var diferente)    │ │
-│           │                 └──────────────┬─────────────────────┘ │
-│    HTTPS + X-User-Id                       │ PutItem / GetItem     │
-│                                            ▼                       │
-│                             ┌──────────────────────────────────┐   │
-│                             │    DynamoDB — tabela simulations  │   │
-│                             │    PK: simulationId (UUID)        │   │
-│                             └──────────────────────────────────┘   │
-└────────────────────────────────────────────────────────────────────┘
-          ▲
-          │ HTTPS
-┌─────────────────────┐
-│  Frontend — HTML/   │
-│  CSS/JS single-page │
-│  hospedado no S3    │
-└─────────────────────┘
-```
+
 
 ### Arquitetura Interna — Hexagonal (Ports & Adapters)
 
@@ -85,6 +59,8 @@ adapter.out
 ────────────
 DynamoSimulationRepository   (implementa SaveSimulationPort + GetSimulationPort)
 ```
+
+<img width="1087" height="426" alt="arquitetura-calculadora-juros-compostos" src="https://github.com/user-attachments/assets/c1840c7b-6385-48b0-9ea6-de6939231513" />
 
 ---
 
